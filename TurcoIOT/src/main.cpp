@@ -3,14 +3,16 @@
 #include <WiFi.h>
 #include <ESP_Mail_Client.h>
 #include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
+#include <PirSensor.h>
+
 
 
 DHT dht;
-#define WIFI_SSID "TecniRTM_CDAReviautos"
-#define WIFI_PASSWORD "T3cn1RTM"
+#define WIFI_SSID "ALFRED 2G"
+#define WIFI_PASSWORD "1125658411"
 
 #define SECRET_CH_ID 1756985			// replace 0000000 with your channel number
-#define SECRET_WRITE_APIKEY "55U8BRZPPFWJC5WC" 
+#define SECRET_WRITE_APIKEY "FIK2XHGA6W4WPYSN" 
 
 unsigned long myChannelNumber = SECRET_CH_ID;
 const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
@@ -21,7 +23,7 @@ WiFiClient espClient;
 //** P I N S   U T I L I Z A D O S ***
 //************************
 #define PINWIFI 2
-#define DHTPIN 12
+#define DHTPIN 4
 #define PIR1 14
 #define PIR2 27
 #define ESTRACTOR1 26
@@ -32,6 +34,10 @@ WiFiClient espClient;
 #define FLUJO2 32
 #define FOGON1 35
 #define FOGON2 34
+
+
+PirSensor motion1 = PirSensor(PIR1, 2, false, false);
+PirSensor motion2 = PirSensor(PIR2, 2, false, false);
 //#define DHTTYPE DHT11
 
 //************************
@@ -40,9 +46,13 @@ WiFiClient espClient;
 void setup_wifi();
 void reconnect();
 void publicador_think(int,int);
+void personas_pir();
 
 int cont2=0;
+int cont_think=0;
 void setup(){
+  motion1.begin();
+  motion2.begin();
   
   // put your setup code here, to run once:
   pinMode(PINWIFI,OUTPUT);
@@ -59,6 +69,7 @@ void loop(){
   if (WiFi.status() != WL_CONNECTED) {
     setup_wifi();
   }
+  personas_pir();
   // put your main code here, to run repeatedly:
   delay(dht.getMinimumSamplingPeriod());
   Serial.print("Humedad relativa");
@@ -100,11 +111,28 @@ void setup_wifi(){
 }
 
 void publicador_think(int input,int val){
-    int x = ThingSpeak.writeField(myChannelNumber, input, val, myWriteAPIKey);
-  if(x == 200){
-    Serial.println("Channel update successful.");
-  }
-  else{
-    Serial.println("Problem updating channel. HTTP error code " + String(x));
-  }
+  if(cont_think>9){
+    cont_think=0;
+  int x = ThingSpeak.writeField(myChannelNumber, input, val, myWriteAPIKey);
+    if(x == 200){
+      Serial.println("Channel update successful.");
+    }
+    else{
+      Serial.println("Problem updating channel. HTTP error code " + String(x));
+    }
+  }else{
+    cont_think++;
+  }  
+}
+
+void personas_pir(){
+    
+        int motionStateChange1 = motion1.sampleValue();
+        int motionStateChange2 = motion2.sampleValue();
+        if (motionStateChange1 >= 0) {
+            Serial.println(motionStateChange1);
+        }
+        if (motionStateChange2 >= 0) {
+            Serial.println(motionStateChange2);
+        }
 }
