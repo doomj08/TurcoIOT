@@ -39,7 +39,7 @@ WiFiClient espClient;
 //************************
 void setup_wifi();
 void reconnect();
-void publicador_think();
+void publicador_think(int,int);
 
 int cont2=0;
 void setup(){
@@ -67,7 +67,7 @@ void loop(){
   Serial.print(dht.getTemperature());
   Serial.print("\t");
   cont2++;
-  publicador_think(cont2,"number");
+  publicador_think(1,cont2);
 }
 
 void setup_wifi(){
@@ -99,8 +99,8 @@ void setup_wifi(){
   Serial.println(WiFi.localIP());
 }
 
-void publicador_think(int dato, String tipo ){
-    int x = ThingSpeak.writeField(myChannelNumber, dato, tipo, myWriteAPIKey);
+void publicador_think(int input,int val){
+    int x = ThingSpeak.writeField(myChannelNumber, input, val, myWriteAPIKey);
   if(x == 200){
     Serial.println("Channel update successful.");
   }
