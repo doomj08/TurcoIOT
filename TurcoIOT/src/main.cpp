@@ -1,7 +1,11 @@
 #include <Arduino.h>
 #include "DHT.h"
+#include <WiFi.h>
+#include <ESP_Mail_Client.h>
 
 DHT dht;
+#define WIFI_SSID "<ssid>"
+#define WIFI_PASSWORD "<password>"
 
 void setup(){
   // put your setup code here, to run once:
