@@ -38,7 +38,7 @@ void setup_wifi(){
   Serial.print("Conectando a ssid: ");
   Serial.println(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  int cont=0;
+  int cont=10;
   while (WiFi.status() != WL_CONNECTED) {
     if (cont>10)
     {
