@@ -9,6 +9,14 @@ DHT dht;
 #define WIFI_SSID "TecniRTM_CDAReviautos"
 #define WIFI_PASSWORD "T3cn1RTM"
 
+#define SECRET_CH_ID 1756985			// replace 0000000 with your channel number
+#define SECRET_WRITE_APIKEY "55U8BRZPPFWJC5WC" 
+
+unsigned long myChannelNumber = SECRET_CH_ID;
+const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
+
+WiFiClient espClient;
+
 //************************
 //** P I N S   U T I L I Z A D O S ***
 //************************
@@ -26,25 +34,31 @@ DHT dht;
 #define FOGON2 34
 //#define DHTTYPE DHT11
 
-
-
-
 //************************
 //** F U N C I O N E S ***
 //************************
 void setup_wifi();
+void reconnect();
+void publicador_think();
 
+int cont2=0;
 void setup(){
+  
   // put your setup code here, to run once:
   pinMode(PINWIFI,OUTPUT);
   Serial.begin(9600);
   Serial.println("Conectando a internet");
   setup_wifi();
+    ThingSpeak.begin(espClient);  // Initialize ThingSpeak
 
   dht.setup(DHTPIN); // data pin 2
 }
 
 void loop(){
+  digitalWrite(PINWIFI,(WiFi.status() == WL_CONNECTED));
+  if (WiFi.status() != WL_CONNECTED) {
+    setup_wifi();
+  }
   // put your main code here, to run repeatedly:
   delay(dht.getMinimumSamplingPeriod());
   Serial.print("Humedad relativa");
@@ -52,10 +66,8 @@ void loop(){
   Serial.println("Temperatura");
   Serial.print(dht.getTemperature());
   Serial.print("\t");
-}
-
-void led_wifi(){
-  
+  cont2++;
+  publicador_think(cont2,"number");
 }
 
 void setup_wifi(){
@@ -87,3 +99,12 @@ void setup_wifi(){
   Serial.println(WiFi.localIP());
 }
 
+void publicador_think(int dato, String tipo ){
+    int x = ThingSpeak.writeField(myChannelNumber, dato, tipo, myWriteAPIKey);
+  if(x == 200){
+    Serial.println("Channel update successful.");
+  }
+  else{
+    Serial.println("Problem updating channel. HTTP error code " + String(x));
+  }
+}
