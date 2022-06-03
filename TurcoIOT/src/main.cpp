@@ -3,13 +3,14 @@
 #include <WiFi.h>
 #include <ESP_Mail_Client.h>
 #include "ThingSpeak.h" // always include thingspeak header file after other header files and custom macros
-#include <PirSensor.h>
+
+
 
 
 
 DHT dht;
-#define WIFI_SSID "ALFRED 2G"
-#define WIFI_PASSWORD "1125658411"
+#define WIFI_SSID "UNISANGIL YOPAL"
+#define WIFI_PASSWORD ""
 
 #define SECRET_CH_ID 1756985			// replace 0000000 with your channel number
 #define SECRET_WRITE_APIKEY "FIK2XHGA6W4WPYSN" 
@@ -35,9 +36,6 @@ WiFiClient espClient;
 #define FOGON1 35
 #define FOGON2 34
 
-
-PirSensor motion1 = PirSensor(PIR1, 2, false, false);
-PirSensor motion2 = PirSensor(PIR2, 2, false, false);
 //#define DHTTYPE DHT11
 
 //************************
@@ -47,12 +45,26 @@ void setup_wifi();
 void reconnect();
 void publicador_think(int,int);
 void personas_pir();
+void control_flujo(int);
+void control_fogones(int);
+void controlar_temperatura(bool);
+void controlar_humedad(bool);
 
-int cont2=0;
+int cant_personas=0;
 int cont_think=0;
+//************************************************
+//** C O N D I C I O N E S   I N I C I A L E S ***
+//************************************************
+float temp_inicial=40;
+float hum_inicial=70;
+
+float temp_min=52;
+float temp_max=55;
+
+float hum_min=89;
+float hum_max=95;
 void setup(){
-  motion1.begin();
-  motion2.begin();
+
   
   // put your setup code here, to run once:
   pinMode(PINWIFI,OUTPUT);
@@ -71,14 +83,9 @@ void loop(){
   }
   personas_pir();
   // put your main code here, to run repeatedly:
-  delay(dht.getMinimumSamplingPeriod());
-  Serial.print("Humedad relativa");
-  Serial.print(dht.getHumidity());
-  Serial.println("Temperatura");
-  Serial.print(dht.getTemperature());
-  Serial.print("\t");
-  cont2++;
-  publicador_think(1,cont2);
+  
+  publicador_think(1,dht.getHumidity());
+  publicador_think(2,dht.getTemperature());
 }
 
 void setup_wifi(){
@@ -111,7 +118,7 @@ void setup_wifi(){
 }
 
 void publicador_think(int input,int val){
-  if(cont_think>9){
+  if(cont_think>20){
     cont_think=0;
   int x = ThingSpeak.writeField(myChannelNumber, input, val, myWriteAPIKey);
     if(x == 200){
@@ -126,7 +133,7 @@ void publicador_think(int input,int val){
 }
 
 void personas_pir(){
-    
+    /*
         int motionStateChange1 = motion1.sampleValue();
         int motionStateChange2 = motion2.sampleValue();
         if (motionStateChange1 >= 0) {
@@ -135,4 +142,81 @@ void personas_pir(){
         if (motionStateChange2 >= 0) {
             Serial.println(motionStateChange2);
         }
+        */
+        controlar_temperatura(cant_personas=0);
+        controlar_humedad(cant_personas=0);
+}
+
+void controlar_temperatura(bool en_uso){
+  float check_temp;
+  int temp_leida=dht.getTemperature();
+
+  if(en_uso)
+    check_temp=temp_min;
+  else
+    check_temp=temp_inicial;
+
+    if(temp_leida<check_temp){
+      control_fogones(2);
+    }
+    else{
+      control_fogones(1);
+    }  
+}
+
+void controlar_humedad(bool en_uso){
+  float check_hum;
+  int hum_leida=dht.getHumidity();
+
+  if(en_uso)
+    check_hum=temp_min;
+  else
+    check_hum=temp_inicial;
+
+    if(hum_leida<check_hum){
+      control_flujo(2);
+      control_fogones(1);
+    }
+    else{
+      control_flujo(1);
+    }  
+}
+
+void control_fogones(int cantidad){
+  if(cantidad=0){
+    digitalWrite(FOGON1,LOW);
+    digitalWrite(FOGON2,LOW);
+  }
+  else if(cantidad=1){
+    digitalWrite(FOGON1,HIGH);
+    digitalWrite(FOGON2,OUTPUT);
+  }
+  else{
+    digitalWrite(FOGON1,HIGH);
+    digitalWrite(FOGON2,HIGH);
+  }    
+}
+
+  void control_flujo(int cantidad){
+  if(cantidad=0){
+    digitalWrite(FLUJO1,LOW);
+    digitalWrite(FLUJO1,LOW);
+  }
+  else if(cantidad=1){
+    digitalWrite(FLUJO1,HIGH);
+    digitalWrite(FLUJO1,OUTPUT);
+  }
+  else{
+    digitalWrite(FLUJO1,HIGH);
+    digitalWrite(FLUJO1,HIGH);
+  }
+}
+
+void old(){
+      delay(dht.getMinimumSamplingPeriod());
+    Serial.println("Humedad relativa");
+    Serial.print(dht.getHumidity());
+    Serial.println("Temperatura");
+    Serial.print(dht.getTemperature());
+    Serial.print("\t");
 }
